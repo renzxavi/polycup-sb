@@ -1,0 +1,233 @@
+---
+// src/pages/auth.astro
+import Layout from '../layouts/Layout.astro';
+import { createSupabaseServerClient, setAuthCookies } from '../lib/supabase.js';
+
+// Si ya está logueado, saltar al paso 2
+const supabase = createSupabaseServerClient(Astro.request, Astro.response);
+const { data: { user } } = await supabase.auth.getUser();
+if (user) return Astro.redirect('/recipes');
+
+// Manejar POST del form
+let errorMsg = '';
+let successMsg = '';
+
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const action = formData.get('action');
+
+  if (action === 'signin') {
+    const email = formData.get('email')?.toString() || '';
+    const password = formData.get('password')?.toString() || '';
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      errorMsg = 'Invalid email or password.';
+    } else {
+      setAuthCookies(Astro.response, data.session);
+      return Astro.redirect('/recipes');
+    }
+  }
+
+  if (action === 'register') {
+    const email = formData.get('email')?.toString() || '';
+    const password = formData.get('password')?.toString() || '';
+    const confirm = formData.get('confirm')?.toString() || '';
+    const firstName = formData.get('first_name')?.toString() || '';
+    const lastName = formData.get('last_name')?.toString() || '';
+    const phone = formData.get('phone')?.toString() || '';
+
+    if (password !== confirm) {
+      errorMsg = 'Passwords do not match.';
+    } else if (password.length < 8) {
+      errorMsg = 'Password must be at least 8 characters.';
+    } else {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            phone,
+          }
+        }
+      });
+
+      if (error) {
+        errorMsg = error.message;
+      } else {
+        // Insertar perfil en tabla profiles
+        if (data.user) {
+          await supabase.from('profiles').insert({
+            id: data.user.id,
+            first_name: firstName,
+            last_name: lastName,
+            email,
+            phone,
+          });
+        }
+        successMsg = 'Account created! Check your email to confirm.';
+      }
+    }
+  }
+}
+---
+
+<Layout title="Sign In" activeStep={1}>
+
+  <a href="/" class="back-link">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M12 19V5M5 12l7-7 7 7"/>
+    </svg>
+    BACK
+  </a>
+
+  <div class="auth-page">
+
+    <!-- LEFT: Forms -->
+    <div class="auth-left">
+
+      <div class="auth-heading">
+        <span class="auth-h-sign">SIGN IN</span>
+        <span class="auth-h-create">OR CREATE</span>
+        <span class="auth-h-account">AN ACCOUNT</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">SIGN IN</button>
+        <button class="auth-tab" id="tab-register" onclick="switchTab('register')">REGISTER</button>
+      </div>
+
+      <!-- SIGN IN FORM -->
+      <div id="form-signin" class="auth-form">        {errorMsg && <div class="alert alert-error">{errorMsg}</div>}
+        {successMsg && <div class="alert alert-success">{successMsg}</div>}
+
+        <form method="POST">
+          <input type="hidden" name="action" value="signin" />
+
+          <div class="form-group">
+            <label class="form-label">EMAIL</label>
+            <input
+              type="email"
+              name="email"
+              class="form-input"
+              placeholder="your@email.com"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">PASSWORD</label>
+            <input
+              type="password"
+              name="password"
+              class="form-input"
+              placeholder="········"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn-primary">
+            SIGN IN →
+          </button>
+        </form>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="form-register" class="auth-form" style="display:none">        {errorMsg && <div class="alert alert-error">{errorMsg}</div>}
+        {successMsg && <div class="alert alert-success">{successMsg}</div>}
+
+        <form method="POST">
+          <input type="hidden" name="action" value="register" />
+
+          <div class="form-group form-row">
+            <div>
+              <label class="form-label">NAME</label>
+              <input type="text" name="first_name" class="form-input" placeholder="Ada" required />
+            </div>
+            <div>
+              <label class="form-label">LAST NAME</label>
+              <input type="text" name="last_name" class="form-input" placeholder="Lovelace" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">EMAIL</label>
+            <input type="email" name="email" class="form-input" placeholder="your@email.com" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">PHONE</label>
+            <input type="tel" name="phone" class="form-input" placeholder="+1 555 000 0000" />
+          </div>
+
+          <div class="form-group form-row">
+            <div>
+              <label class="form-label">PASSWORD</label>
+              <input type="password" name="password" class="form-input" placeholder="Min. 8 characters" required minlength="8" />
+            </div>
+            <div>
+              <label class="form-label">CONFIRM</label>
+              <input type="password" name="confirm" class="form-input" placeholder="Repeat password" required />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            CREATE ACCOUNT →
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Cup illustration -->
+    <div class="auth-right">
+      <div class="cup-container" style="transform: translateX(8%);">
+        <img src="/images/cup.png" alt="Coffee cup" class="cup-img" />
+      </div>
+      <div class="step-number-bg" style="bottom: 80px; right: 40px;">01</div>
+    </div>
+
+  </div>
+
+  <div class="continue-cta">
+    CONTINUE
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M12 5v14M5 12l7 7 7-7"/>
+    </svg>
+  </div>
+
+</Layout>
+
+<script>
+  // Cambiar entre tabs Sign In / Register
+  function switchTab(tab) {
+    const signin = document.getElementById('form-signin');
+    const register = document.getElementById('form-register');
+    const tabSignin = document.getElementById('tab-signin');
+    const tabRegister = document.getElementById('tab-register');
+
+    if (tab === 'signin') {
+      signin.style.display = 'block';
+      register.style.display = 'none';
+      tabSignin.classList.add('active');
+      tabRegister.classList.remove('active');
+    } else {
+      signin.style.display = 'none';
+      register.style.display = 'block';
+      tabSignin.classList.remove('active');
+      tabRegister.classList.add('active');
+    }
+  }
+
+  // Exponer globalmente para los onclick inline
+  window.switchTab = switchTab;
+
+  // Si hay error en el form de register, mostrar esa tab automáticamente
+  // (el POST viene con action=register en el form hidden)
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('tab') === 'register') {
+    switchTab('register');
+  }
+</script>

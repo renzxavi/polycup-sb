@@ -1,23 +1,75 @@
-<!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
-</html>
+---
+// src/layouts/Layout.astro
+const { title = 'PolyCup', activeStep = 0 } = Astro.props;
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
+const steps = [
+  { num: '01', label: 'LOG IN OR SIGN UP', href: '/auth' },
+  { num: '02', label: 'SELECT YOUR COFFEE RECIPE', href: '/recipes' },
+  { num: '03', label: 'CHOOSE A DATE AND TIME', href: '/schedule' },
+  { num: '04', label: 'WHAT TO BRING', href: '/prepare' },
+  { num: '05', label: 'COMPLETE PAYMENT', href: '/payment' },
+  { num: '06', label: 'JOIN YOUR LIVE CLASS', href: '/session' },
+];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title} — PolyCup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="/styles/global.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <a href="/me" class="navbar-me">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      <span>ME</span>
+    </a>
+
+    <div class="navbar-stats">
+      <div class="navbar-stat">
+        <span class="val">9</span>
+        <span class="label">RECIPE</span>
+      </div>
+      <div class="navbar-stat">
+        <span class="val">10'</span>
+        <span class="label">PER SESSION</span>
+      </div>
+      <div class="navbar-stat">
+        <span class="val">1:1</span>
+        <span class="label">PRIVATE</span>
+      </div>
+      <div class="navbar-stat">
+        <span class="val">$ 5</span>
+        <span class="label">FROM</span>
+      </div>
+    </div>
+
+    <a href="/" class="navbar-brand">POLY<span>C</span>UP</a>
+  </nav>
+
+  <!-- STEPS SIDEBAR -->
+  <aside class="steps-sidebar">
+    {steps.map((step, i) => (
+      <div class={`step-item ${activeStep === i + 1 ? 'active' : ''}`}>
+        <span class="step-num">{step.num}</span>
+        <span>{step.label}</span>
+      </div>
+    ))}
+  </aside>
+
+  <!-- PAGE CONTENT -->
+  <main>
+    <slot />
+  </main>
+
+</body>
+</html>

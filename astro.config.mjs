@@ -1,5 +1,7 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
 
-// https://astro.build/config
-export default defineConfig({});
+export default defineConfig({
+  output: 'server', // SSR necesario para Supabase auth en Vercel
+  // Para Vercel: instalar @astrojs/vercel y descomentar:
+  // adapter: vercel(),
+});

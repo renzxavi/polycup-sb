@@ -1,11 +1,38 @@
 ---
-import Welcome from '../components/Welcome.astro';
+// src/pages/index.astro
 import Layout from '../layouts/Layout.astro';
+import { createSupabaseServerClient } from '../lib/supabase.js';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+// Si ya está logueado, redirigir al paso siguiente
+const supabase = createSupabaseServerClient(Astro.request, Astro.response);
+const { data: { user } } = await supabase.auth.getUser();
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="Learn Coffee Recipes" activeStep={0}>
+
+  <section class="hero">
+    <!-- LEFT: stacked title blocks -->
+    <div class="hero-left">
+      <span class="hero-block learn">LEARN</span>
+      <span class="hero-block coffee">COFFEE</span>
+      <span class="hero-block recipes">RECIPES</span>
+    </div>
+
+    <!-- CENTER: cup image — poné tu foto en public/images/cup.png -->
+    <div class="cup-container">
+      <img src="/images/cup.png" alt="Coffee cup" class="cup-img" />
+    </div>
+
+    <!-- RIGHT: empty (steps sidebar is fixed) -->
+    <div></div>
+  </section>
+
+  <!-- START BREWING CTA -->
+  <a href="/auth" class="start-brewing">
+    START BREWING
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M12 5v14M5 12l7 7 7-7"/>
+    </svg>
+  </a>
+
 </Layout>

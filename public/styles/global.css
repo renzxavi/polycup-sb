@@ -1,0 +1,601 @@
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --black: #111111;
+  --white: #f8f6f1;
+  --gold: #e8c94a;
+  --gold-dark: #d4b535;
+  --blue: #5a7a9f;
+  --red: #c94a35;
+  --gray: #8a8a8a;
+  --gray-light: #e0ddd7;
+  --border: 2px solid var(--black);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Space Mono', monospace;
+  background: var(--white);
+  color: var(--black);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NAVBAR ─────────────────────────────────── */
+.navbar {
+  display: flex;
+  align-items: stretch;
+  height: 52px;
+  background: var(--black);
+  color: var(--white);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-me {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  border-right: var(--border);
+  border-color: #333;
+  gap: 2px;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--white);
+}
+
+.navbar-me svg { width: 18px; height: 18px; }
+.navbar-me span { font-size: 9px; letter-spacing: 0.1em; }
+
+.navbar-stats {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+  gap: 48px;
+}
+
+.navbar-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.navbar-stat .val {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Black Han Sans', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.navbar-stat .label {
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  color: var(--gray);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.05em;
+  color: var(--white);
+  border-left: 2px solid #333;
+  text-decoration: none;
+}
+
+.navbar-brand span { color: var(--gold); }
+
+/* ── STEPS SIDEBAR ───────────────────────────── */
+.steps-sidebar {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 50;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  padding: 6px 10px;
+  border: 1px solid var(--gray-light);
+  color: var(--gray);
+  background: var(--white);
+  white-space: nowrap;
+  cursor: default;
+  transition: all 0.2s;
+}
+
+.step-item.active {
+  background: var(--gold);
+  border-color: var(--black);
+  color: var(--black);
+  font-weight: 700;
+  border-width: 2px;
+}
+
+.step-num {
+  font-weight: 700;
+  font-size: 9px;
+}
+
+/* ── HERO (HOME) ─────────────────────────────── */
+.hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  min-height: calc(100vh - 52px);
+  padding: 40px 0 40px 0;
+  position: relative;
+}
+
+.hero-left {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.hero-block {
+  font-family: 'Black Han Sans', sans-serif;
+  text-transform: uppercase;
+  line-height: 1;
+  display: block;
+}
+
+.hero-block.learn {
+  background: var(--blue);
+  color: var(--white);
+  font-size: clamp(40px, 7vw, 80px);
+  padding: 16px 32px;
+  width: fit-content;
+}
+
+.hero-block.coffee {
+  background: var(--gold);
+  color: var(--black);
+  font-size: clamp(55px, 10vw, 120px);
+  padding: 20px 48px;
+  margin-top: -4px;
+  width: fit-content;
+}
+
+.hero-block.recipes {
+  background: var(--red);
+  color: var(--white);
+  font-size: clamp(40px, 7vw, 80px);
+  padding: 16px 40px;
+  margin-top: -4px;
+  margin-left: 48px;
+  width: fit-content;
+}
+
+/* ── CUP SVG ─────────────────────────────────── */
+.cup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cup-img {
+  width: min(320px, 35vw);
+  height: auto;
+  object-fit: contain;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* ── START BREWING CTA ───────────────────────── */
+.start-brewing {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--black);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px solid var(--black);
+  padding-bottom: 2px;
+  transition: gap 0.2s;
+}
+
+.start-brewing:hover { gap: 14px; }
+
+/* ── AUTH PAGE ───────────────────────────────── */
+.auth-page {
+  display: grid;
+  grid-template-columns: 38% 62%;
+  height: calc(100vh - 52px);
+  overflow: hidden;
+}
+
+.auth-left {
+  display: flex;
+  flex-direction: column;
+  border-right: var(--border);
+  overflow: hidden;
+}
+
+.auth-heading {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.auth-h-sign {
+  background: var(--blue);
+  color: var(--white);
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(22px, 3.5vw, 48px);
+  padding: 12px 24px;
+  display: block;
+  width: fit-content;
+}
+
+.auth-h-create {
+  background: var(--gold);
+  color: var(--black);
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(20px, 3vw, 42px);
+  padding: 12px 48px 12px 24px;
+  display: block;
+}
+
+.auth-h-account {
+  background: var(--red);
+  color: var(--white);
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(20px, 3vw, 42px);
+  padding: 12px 48px;
+  display: block;
+}
+
+/* Tabs */
+.auth-tabs {
+  display: flex;
+  border-bottom: var(--border);
+  flex-shrink: 0;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: 'Space Mono', monospace;
+  color: var(--gray);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+
+.auth-tab.active {
+  color: var(--black);
+  border-bottom: 2px solid var(--black);
+}
+
+/* Form scroll area */
+.auth-form {
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-light) transparent;
+}
+
+.auth-form::-webkit-scrollbar { width: 4px; }
+.auth-form::-webkit-scrollbar-thumb {
+  background: var(--gray-light);
+  border-radius: 2px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  margin-bottom: 6px;
+  color: var(--gray);
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--gray-light);
+  background: var(--white);
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  color: var(--black);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-input:focus {
+  border-color: var(--black);
+  border-width: 2px;
+}
+
+.form-input.error { border-color: var(--red); }
+
+.form-error {
+  font-size: 10px;
+  color: var(--red);
+  margin-top: 4px;
+  letter-spacing: 0.05em;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--gold);
+  border: 2px solid var(--black);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s, transform 0.1s;
+  text-transform: uppercase;
+  margin-top: 8px;
+}
+
+.btn-primary:hover { background: var(--gold-dark); }
+.btn-primary:active { transform: scale(0.99); }
+
+/* Auth right — cup + step number */
+.auth-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.step-number-bg {
+  position: absolute;
+  bottom: 40px;
+  right: 60px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 160px;
+  color: var(--gray-light);
+  line-height: 1;
+  user-select: none;
+}
+
+/* Back link */
+.back-link {
+  position: fixed;
+  top: 68px;
+  right: 24px;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--gray);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 200;
+}
+
+.back-link:hover { color: var(--black); }
+
+/* Alert messages */
+.alert {
+  padding: 10px 14px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+  border-left: 4px solid;
+}
+
+.alert-error { background: #fff0ee; border-color: var(--red); color: var(--red); }
+.alert-success { background: #f0fff4; border-color: #2d7a3a; color: #2d7a3a; }
+
+/* Continue CTA */
+.continue-cta {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--gray);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Step 02 big number watermark */
+.step-watermark {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 120px;
+  color: var(--gray-light);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── SPLIT PAGE (login / register) ───────────── */
+.split-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: calc(100vh - 52px);
+  overflow: hidden;
+}
+
+.split-left {
+  display: flex;
+  flex-direction: column;
+  border-right: var(--border);
+  overflow: hidden;
+}
+
+/* Heading blocks — igual que home hero */
+.split-heading {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sh-block {
+  font-family: 'Black Han Sans', sans-serif;
+  text-transform: uppercase;
+  line-height: 1;
+  display: block;
+}
+
+.sh-blue {
+  background: var(--blue);
+  color: var(--white);
+  font-size: clamp(32px, 4vw, 64px);
+  padding: 14px 32px;
+  width: fit-content;
+}
+
+.sh-gold {
+  background: var(--gold);
+  color: var(--black);
+  font-size: clamp(40px, 5.5vw, 88px);
+  padding: 16px 56px 16px 32px;
+  margin-top: -3px;
+  width: fit-content;
+}
+
+.sh-red {
+  background: var(--red);
+  color: var(--white);
+  font-size: clamp(32px, 4vw, 64px);
+  padding: 14px 40px;
+  margin-top: -3px;
+  margin-left: 40px;
+  width: fit-content;
+}
+
+/* Scroll area para el form */
+.split-form-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-light) transparent;
+}
+
+.split-form-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.split-form-scroll::-webkit-scrollbar-thumb {
+  background: var(--gray-light);
+  border-radius: 2px;
+}
+
+.split-form { display: flex; flex-direction: column; }
+
+/* Divider con texto */
+.form-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--gray);
+}
+.form-divider::before,
+.form-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--gray-light);
+}
+
+.forgot-row {
+  text-align: right;
+  margin-top: -12px;
+  margin-bottom: 20px;
+}
+
+.form-link {
+  font-size: 10px;
+  color: var(--gray);
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--gray-light);
+}
+.form-link:hover { color: var(--black); border-color: var(--black); }
+
+/* Botón secundario (outlined) */
+.btn-secondary {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 2px solid var(--black);
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--black);
+  transition: background 0.15s;
+  margin-top: 4px;
+}
+.btn-secondary:hover { background: var(--gray-light); }
+
+/* RIGHT side */
+.split-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
