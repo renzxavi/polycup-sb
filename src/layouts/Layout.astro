@@ -1,14 +1,13 @@
 ---
-// src/layouts/Layout.astro
 const { title = 'PolyCup', activeStep = 0 } = Astro.props;
 
 const steps = [
-  { num: '01', label: 'LOG IN OR SIGN UP', href: '/auth' },
-  { num: '02', label: 'SELECT YOUR COFFEE RECIPE', href: '/recipes' },
-  { num: '03', label: 'CHOOSE A DATE AND TIME', href: '/schedule' },
-  { num: '04', label: 'WHAT TO BRING', href: '/prepare' },
-  { num: '05', label: 'COMPLETE PAYMENT', href: '/payment' },
-  { num: '06', label: 'JOIN YOUR LIVE CLASS', href: '/session' },
+  { num: '01', label: 'LOG IN OR SIGN UP' },
+  { num: '02', label: 'SELECT YOUR COFFEE RECIPE' },
+  { num: '03', label: 'CHOOSE A DATE AND TIME' },
+  { num: '04', label: 'WHAT TO BRING' },
+  { num: '05', label: 'COMPLETE PAYMENT' },
+  { num: '06', label: 'JOIN YOUR LIVE CLASS' },
 ];
 ---
 
@@ -18,58 +17,98 @@ const steps = [
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title} — PolyCup</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="/styles/global.css" />
+  <style>
+    body { background: #fff; font-family: 'Space Mono', monospace; margin: 0; }
+
+    /* NAVBAR */
+    .pc-nav { background: #111; height: 56px; display: flex; align-items: stretch; position: sticky; top: 0; z-index: 100; }
+    .pc-nav-me { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 16px; border-right: 1px solid #333; color: #fff; text-decoration: none; gap: 2px; min-width: 56px; }
+    .pc-nav-me svg { width: 18px; height: 18px; }
+    .pc-nav-me span { font-size: 9px; letter-spacing: .1em; }
+    .pc-nav-stats { flex: 1; display: flex; align-items: center; justify-content: center; gap: 32px; }
+    .pc-nav-stat { display: flex; flex-direction: column; align-items: center; }
+    .pc-nav-stat .v { font-family: 'Black Han Sans', sans-serif; font-size: 15px; color: #fff; }
+    .pc-nav-stat .l { font-size: 8px; letter-spacing: .15em; color: #666; }
+    .pc-nav-brand { display: flex; align-items: center; padding: 0 20px; border-left: 1px solid #333; font-family: 'Black Han Sans', sans-serif; font-size: 20px; color: #fff; text-decoration: none; }
+    .pc-nav-brand span { color: #e8c94a; }
+
+    /* STEPS SIDEBAR — desktop */
+    .pc-steps { position: fixed; right: 20px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 5px; z-index: 40; }
+    .pc-step { display: flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: .1em; padding: 5px 10px; white-space: nowrap; font-family: 'Space Mono', monospace; }
+    .pc-step.active { background: #e8c94a; border: 2px solid #111; color: #111; font-weight: 700; }
+    .pc-step.inactive { border: 1px solid #e0ddd7; color: #aaa; background: #fff; }
+    .pc-step-num { font-size: 9px; font-weight: 700; }
+    .pc-step-label { }
+
+    /* STEPS BOTTOM BAR — mobile */
+    .pc-steps-mobile { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 2px solid #111; z-index: 90; overflow-x: auto; }
+    .pc-steps-mobile-inner { display: flex; padding: 6px 8px; gap: 4px; min-width: max-content; }
+    .pc-step-m { display: flex; align-items: center; gap: 4px; font-size: 9px; letter-spacing: .08em; padding: 4px 8px; font-family: 'Space Mono', monospace; white-space: nowrap; }
+    .pc-step-m.active { background: #e8c94a; border: 2px solid #111; color: #111; font-weight: 700; }
+    .pc-step-m.inactive { border: 1px solid #e0ddd7; color: #aaa; }
+
+    @media (max-width: 768px) {
+      .pc-nav-stats { gap: 12px; }
+      .pc-nav-stat .l { display: none; }
+      .pc-nav-brand { font-size: 16px; padding: 0 12px; }
+      .pc-steps { display: none; }
+      .pc-steps-mobile { display: block; }
+      body { padding-bottom: 48px; }
+    }
+  </style>
 </head>
 <body>
 
   <!-- NAVBAR -->
-  <nav class="navbar">
-    <a href="/me" class="navbar-me">
+  <nav class="pc-nav">
+    <a href="/me" class="pc-nav-me">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="12" cy="8" r="4"/>
-        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
       </svg>
       <span>ME</span>
     </a>
 
-    <div class="navbar-stats">
-      <div class="navbar-stat">
-        <span class="val">9</span>
-        <span class="label">RECIPE</span>
-      </div>
-      <div class="navbar-stat">
-        <span class="val">10'</span>
-        <span class="label">PER SESSION</span>
-      </div>
-      <div class="navbar-stat">
-        <span class="val">1:1</span>
-        <span class="label">PRIVATE</span>
-      </div>
-      <div class="navbar-stat">
-        <span class="val">$ 5</span>
-        <span class="label">FROM</span>
-      </div>
+    <div class="pc-nav-stats">
+      {[['9','RECIPE'],["10'",'PER SESSION'],['1:1','PRIVATE'],['$ 5','FROM']].map(([val, label]) => (
+        <div class="pc-nav-stat">
+          <span class="v">{val}</span>
+          <span class="l">{label}</span>
+        </div>
+      ))}
     </div>
 
-    <a href="/" class="navbar-brand">POLY<span>C</span>UP</a>
+    <a href="/" class="pc-nav-brand">POLY<span>C</span>UP</a>
   </nav>
 
-  <!-- STEPS SIDEBAR -->
-  <aside class="steps-sidebar">
+  <!-- STEPS SIDEBAR (desktop) -->
+  <aside class="pc-steps">
     {steps.map((step, i) => (
-      <div class={`step-item ${activeStep === i + 1 ? 'active' : ''}`}>
-        <span class="step-num">{step.num}</span>
-        <span>{step.label}</span>
+      <div class={`pc-step ${activeStep === i+1 ? 'active' : 'inactive'}`}>
+        <span class="pc-step-num">{step.num}</span>
+        <span class="pc-step-label">{step.label}</span>
       </div>
     ))}
   </aside>
 
-  <!-- PAGE CONTENT -->
+  <!-- STEPS BOTTOM BAR (mobile) -->
+  <div class="pc-steps-mobile">
+    <div class="pc-steps-mobile-inner">
+      {steps.map((step, i) => (
+        <div class={`pc-step-m ${activeStep === i+1 ? 'active' : 'inactive'}`}>
+          <span style="font-weight:700">{step.num}</span>
+          <span>{step.label}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+
   <main>
     <slot />
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

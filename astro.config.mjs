@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config';
+import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
-  output: 'server', // SSR necesario para Supabase auth en Vercel
-  // Para Vercel: instalar @astrojs/vercel y descomentar:
-  // adapter: vercel(),
+  output: 'server',
+  integrations: [tailwind()],
 });

@@ -1,0 +1,356 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { createSupabaseServerClient } from '../lib/supabase.js';
+
+const supabase = createSupabaseServerClient(Astro.request, Astro.response);
+const { data: recipes, error } = await supabase
+  .from('recipes')
+  .select('*')
+  .eq('active', true)
+  .order('created_at', { ascending: true });
+
+const difficultyLabel = {
+  easy:   { label: 'EASY',   color: '#2d7a3a' },
+  medium: { label: 'MEDIUM', color: '#b87a00' },
+  hard:   { label: 'HARD',   color: '#c94a35' },
+};
+---
+
+<Layout title="Select Recipe" activeStep={0}>
+
+<style>
+  .pc-steps, .pc-steps-mobile { display: none !important; }
+
+  .rp-page {
+    display: grid;
+    grid-template-columns: 38% 62%;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+  }
+
+  /* LEFT: lista de recetas */
+  .rp-left {
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid #111;
+    overflow: hidden;
+  }
+
+  .rp-heading {
+    flex-shrink: 0;
+  }
+
+  .rp-list {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #e0ddd7 transparent;
+  }
+  .rp-list::-webkit-scrollbar { width: 4px; }
+  .rp-list::-webkit-scrollbar-thumb { background: #e0ddd7; border-radius: 2px; }
+
+  .rp-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid #e0ddd7;
+    cursor: pointer;
+    transition: background .15s;
+    text-decoration: none;
+    color: #111;
+  }
+  .rp-item:hover { background: #f5f5f5; }
+  .rp-item.selected { background: #e8c94a; border-bottom-color: #111; }
+
+  .rp-item-left { display: flex; align-items: center; gap: 12px; }
+  .rp-item-num {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 11px;
+    color: #aaa;
+    flex-shrink: 0;
+    width: 24px;
+  }
+  .rp-item.selected .rp-item-num { color: #111; }
+
+  .rp-item-info { display: flex; flex-direction: column; gap: 2px; }
+  .rp-item-name {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+  .rp-item-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #888;
+    letter-spacing: .08em;
+  }
+  .rp-item.selected .rp-item-meta { color: #555; }
+
+  .rp-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .rp-item-price {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 15px;
+  }
+  .rp-item-diff {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .1em;
+  }
+
+  /* Logout al fondo */
+  .rp-logout {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .12em;
+    background: none;
+    border: none;
+    border-top: 2px solid #111;
+    color: #c94a35;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+  }
+  .rp-logout:hover { background: #fff0ee; }
+
+  /* RIGHT: detalle + taza */
+  .rp-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 40px;
+  }
+
+  .rp-detail {
+    text-align: center;
+    max-width: 400px;
+    z-index: 1;
+  }
+
+  .rp-detail-name {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(28px, 4vw, 52px);
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+
+  .rp-detail-desc {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.8;
+    letter-spacing: .03em;
+    margin-bottom: 32px;
+  }
+
+  .rp-detail-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 32px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .1em;
+  }
+
+  .rp-detail-badge {
+    padding: 6px 14px;
+    border: 2px solid #111;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: .12em;
+  }
+
+  .rp-select-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 32px;
+    background: #e8c94a;
+    border: 2px solid #111;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .15em;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    color: #111;
+    transition: background .15s;
+  }
+  .rp-select-btn:hover { background: #d4b535; }
+
+  .rp-cup-bg {
+    position: absolute;
+    bottom: -20px;
+    right: -20px;
+    width: min(320px, 35vw);
+    opacity: .08;
+    pointer-events: none;
+  }
+
+  .rp-watermark {
+    position: absolute;
+    bottom: 16px;
+    left: 40px;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 130px;
+    color: #f0f0f0;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  /* Empty state */
+  .rp-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: #ccc;
+  }
+  .rp-empty img { width: 180px; opacity: .4; }
+  .rp-empty p { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .1em; }
+
+  /* AUTH OVERLAY */
+  #auth-checking {
+    position: fixed; inset: 0; background: #fff; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: .15em; color: #aaa;
+  }
+
+  @media (max-width: 768px) {
+    .rp-page { grid-template-columns: 1fr; height: auto; overflow: visible; }
+    .rp-right { display: none; }
+    .rp-left { border-right: none; height: calc(100vh - 56px); }
+  }
+</style>
+
+<div id="auth-checking">CHECKING SESSION...</div>
+
+<div class="rp-page">
+
+  <!-- LEFT: lista de recetas -->
+  <div class="rp-left">
+    <div class="rp-heading">
+      <span class="rh-block rh-blue">SELECT</span>
+      <span class="rh-block rh-gold">YOUR</span>
+      <span class="rh-block rh-red">RECIPE</span>
+    </div>
+
+    <div class="rp-list">
+      {recipes?.map((recipe, i) => (
+        <div
+          class="rp-item"
+          data-id={recipe.id}
+          data-name={recipe.name}
+          data-desc={recipe.description}
+          data-duration={recipe.duration}
+          data-price={recipe.price}
+          data-difficulty={difficultyLabel[recipe.difficulty]?.label ?? recipe.difficulty}
+          data-diff-color={difficultyLabel[recipe.difficulty]?.color ?? '#888'}
+          onclick="selectRecipe(this)"
+        >
+          <div class="rp-item-left">
+            <span class="rp-item-num">0{i + 1}</span>
+            <div class="rp-item-info">
+              <span class="rp-item-name">{recipe.name}</span>
+              <span class="rp-item-meta">{recipe.duration} min · ${recipe.price}</span>
+            </div>
+          </div>
+          <div class="rp-item-right">
+            <span class="rp-item-diff" style={`color:${difficultyLabel[recipe.difficulty]?.color ?? '#888'}`}>
+              {difficultyLabel[recipe.difficulty]?.label ?? recipe.difficulty}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <button id="logout-btn" class="rp-logout">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+      </svg>
+      SIGN OUT
+    </button>
+  </div>
+
+  <!-- RIGHT: detalle -->
+  <div class="rp-right" id="rp-right">
+
+    <!-- Estado vacío -->
+    <div class="rp-empty" id="rp-empty">
+      <img src="/images/cup.png" alt="cup" />
+      <p>← SELECT A RECIPE</p>
+    </div>
+
+    <!-- Detalle (oculto hasta seleccionar) -->
+    <div class="rp-detail" id="rp-detail" style="display:none">
+      <h2 class="rp-detail-name" id="det-name"></h2>
+      <p class="rp-detail-desc" id="det-desc"></p>
+      <div class="rp-detail-meta">
+        <span>⏱ <span id="det-duration"></span> MIN</span>
+        <span id="det-diff" class="rp-detail-badge"></span>
+        <span>$ <span id="det-price"></span></span>
+      </div>
+      <a id="rp-select-btn" href="#" class="rp-select-btn">
+        SELECT THIS RECIPE →
+      </a>
+    </div>
+
+    <img src="/images/cup.png" alt="" class="rp-cup-bg" />
+    <div class="rp-watermark">02</div>
+  </div>
+
+</div>
+
+</Layout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) window.location.replace('/auth');
+    else document.getElementById('auth-checking').style.display = 'none';
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.replace('/auth');
+  });
+
+  window.selectRecipe = function(el) {
+    // Quitar selected de todos
+    document.querySelectorAll('.rp-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+
+    // Rellenar detalle
+    document.getElementById('det-name').textContent     = el.dataset.name;
+    document.getElementById('det-desc').textContent     = el.dataset.desc;
+    document.getElementById('det-duration').textContent = el.dataset.duration;
+    document.getElementById('det-price').textContent    = el.dataset.price;
+
+    const diffEl = document.getElementById('det-diff');
+    diffEl.textContent  = el.dataset.difficulty;
+    diffEl.style.color  = el.dataset.diffColor;
+    diffEl.style.borderColor = el.dataset.diffColor;
+
+    document.getElementById('rp-select-btn').href = `/schedule?recipe=${el.dataset.id}`;
+
+    document.getElementById('rp-empty').style.display  = 'none';
+    document.getElementById('rp-detail').style.display = 'block';
+  };
+</script>

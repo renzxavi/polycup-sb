@@ -1,38 +1,224 @@
 ---
-// src/pages/index.astro
 import Layout from '../layouts/Layout.astro';
-import { createSupabaseServerClient } from '../lib/supabase.js';
-
-// Si ya está logueado, redirigir al paso siguiente
-const supabase = createSupabaseServerClient(Astro.request, Astro.response);
-const { data: { user } } = await supabase.auth.getUser();
 ---
 
-<Layout title="Learn Coffee Recipes" activeStep={0}>
+<Layout title="Sign In" activeStep={1}>
 
-  <section class="hero">
-    <!-- LEFT: stacked title blocks -->
-    <div class="hero-left">
-      <span class="hero-block learn">LEARN</span>
-      <span class="hero-block coffee">COFFEE</span>
-      <span class="hero-block recipes">RECIPES</span>
-    </div>
-
-    <!-- CENTER: cup image — poné tu foto en public/images/cup.png -->
-    <div class="cup-container">
-      <img src="/images/cup.png" alt="Coffee cup" class="cup-img" />
-    </div>
-
-    <!-- RIGHT: empty (steps sidebar is fixed) -->
-    <div></div>
-  </section>
-
-  <!-- START BREWING CTA -->
-  <a href="/auth" class="start-brewing">
-    START BREWING
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <path d="M12 5v14M5 12l7 7 7-7"/>
+  <a href="/" class="back-link">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M12 19V5M5 12l7-7 7 7"/>
     </svg>
+    BACK
   </a>
 
+  <div class="auth-page">
+
+    <!-- LEFT: Forms -->
+    <div class="auth-left">
+      <div class="auth-heading">
+        <span class="auth-h-sign">SIGN IN</span>
+        <span class="auth-h-create">OR CREATE</span>
+        <span class="auth-h-account">AN ACCOUNT</span>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">SIGN IN</button>
+        <button class="auth-tab" id="tab-register" onclick="switchTab('register')">REGISTER</button>
+      </div>
+
+      <!-- SIGN IN -->
+      <div id="form-signin" class="auth-form">
+        <div id="signin-error" class="alert alert-error" style="display:none"></div>
+        <div class="form-group">
+          <label class="form-label">EMAIL</label>
+          <input type="email" id="signin-email" class="form-input" placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">PASSWORD</label>
+          <input type="password" id="signin-password" class="form-input" placeholder="········" />
+        </div>
+        <button class="btn-primary" id="signin-btn">SIGN IN →</button>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="form-register" class="auth-form" style="display:none">
+        <div id="register-error" class="alert alert-error" style="display:none"></div>
+        <div id="register-success" class="alert alert-success" style="display:none"></div>
+        <div class="form-group form-row">
+          <div>
+            <label class="form-label">NAME</label>
+            <input type="text" id="reg-first" class="form-input" placeholder="Ada" />
+          </div>
+          <div>
+            <label class="form-label">LAST NAME</label>
+            <input type="text" id="reg-last" class="form-input" placeholder="Lovelace" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">EMAIL</label>
+          <input type="email" id="reg-email" class="form-input" placeholder="your@email.com" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">PHONE</label>
+          <input type="tel" id="reg-phone" class="form-input" placeholder="+1 555 000 0000" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">LANGUAGE</label>
+          <select id="reg-language" class="form-input">
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="Portuguese">Portuguese</option>
+            <option value="French">French</option>
+          </select>
+        </div>
+        <div class="form-group form-row">
+          <div>
+            <label class="form-label">STREET</label>
+            <input type="text" id="reg-street" class="form-input" placeholder="Main St" />
+          </div>
+          <div>
+            <label class="form-label">NUMBER</label>
+            <input type="text" id="reg-number" class="form-input" placeholder="123" />
+          </div>
+        </div>
+        <div class="form-group form-row">
+          <div>
+            <label class="form-label">CITY</label>
+            <input type="text" id="reg-city" class="form-input" placeholder="New York" />
+          </div>
+          <div>
+            <label class="form-label">STATE</label>
+            <input type="text" id="reg-state" class="form-input" placeholder="NY" />
+          </div>
+        </div>
+        <div class="form-group form-row">
+          <div>
+            <label class="form-label">COUNTRY</label>
+            <input type="text" id="reg-country" class="form-input" placeholder="USA" />
+          </div>
+          <div>
+            <label class="form-label">ZIP / CP</label>
+            <input type="text" id="reg-zip" class="form-input" placeholder="10001" />
+          </div>
+        </div>
+        <div class="form-group form-row">
+          <div>
+            <label class="form-label">PASSWORD</label>
+            <input type="password" id="reg-password" class="form-input" placeholder="Min. 8 characters" />
+          </div>
+          <div>
+            <label class="form-label">CONFIRM</label>
+            <input type="password" id="reg-confirm" class="form-input" placeholder="Repeat password" />
+          </div>
+        </div>
+        <button class="btn-primary" id="register-btn">CREATE ACCOUNT →</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: cup — solo desktop -->
+    <div class="auth-right">
+      <div class="cup-container" style="transform: translateX(-15%);">
+        <img src="/images/cup.png" alt="Coffee cup" class="cup-img" />
+      </div>
+      <div class="step-number-bg" style="bottom: 80px; right: 40px;">01</div>
+    </div>
+
+  </div>
+
 </Layout>
+
+<style>
+  @media (max-width: 768px) {
+    .auth-page {
+      grid-template-columns: 1fr !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+    .auth-right { display: none !important; }
+    .auth-left { overflow: visible !important; border-right: none !important; }
+    .auth-form { overflow-y: visible !important; max-height: none !important; }
+    .auth-h-sign { font-size: 14vw !important; padding: 10px 20px !important; }
+    .auth-h-create { font-size: 10vw !important; padding: 10px 20px !important; }
+    .auth-h-account { font-size: 10vw !important; padding: 10px 20px !important; }
+    .form-row { grid-template-columns: 1fr !important; }
+    .back-link { top: 62px !important; }
+    .continue-cta { display: none; }
+  }
+</style>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.replace('/recipes');
+  });
+
+  window.switchTab = function(tab) {
+    document.getElementById('form-signin').style.display   = tab === 'signin' ? 'block' : 'none';
+    document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+    document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
+    document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  };
+
+  document.getElementById('signin-btn').addEventListener('click', async () => {
+    const email    = document.getElementById('signin-email').value.trim();
+    const password = document.getElementById('signin-password').value;
+    const errorEl  = document.getElementById('signin-error');
+    const btn      = document.getElementById('signin-btn');
+    errorEl.style.display = 'none';
+    btn.textContent = 'SIGNING IN...';
+    btn.disabled = true;
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      errorEl.textContent = 'Invalid email or password.';
+      errorEl.style.display = 'block';
+      btn.textContent = 'SIGN IN →';
+      btn.disabled = false;
+    } else {
+      window.location.replace('/recipes');
+    }
+  });
+
+  document.getElementById('register-btn').addEventListener('click', async () => {
+    const email     = document.getElementById('reg-email').value.trim();
+    const password  = document.getElementById('reg-password').value;
+    const confirm   = document.getElementById('reg-confirm').value;
+    const errorEl   = document.getElementById('register-error');
+    const successEl = document.getElementById('register-success');
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+    if (password !== confirm) { errorEl.textContent = 'Passwords do not match.'; errorEl.style.display = 'block'; return; }
+    if (password.length < 8)  { errorEl.textContent = 'Min. 8 characters.'; errorEl.style.display = 'block'; return; }
+    const { data, error } = await supabase.auth.signUp({ email, password, options: {
+      data: { first_name: document.getElementById('reg-first').value, last_name: document.getElementById('reg-last').value }
+    }});
+    if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+    if (data.user) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        first_name: document.getElementById('reg-first').value,
+        last_name:  document.getElementById('reg-last').value,
+        email,
+        phone:    document.getElementById('reg-phone').value,
+        language: document.getElementById('reg-language').value,
+        street:   document.getElementById('reg-street').value,
+        number:   document.getElementById('reg-number').value,
+        city:     document.getElementById('reg-city').value,
+        state:    document.getElementById('reg-state').value,
+        country:  document.getElementById('reg-country').value,
+        zip:      document.getElementById('reg-zip').value,
+      });
+      if (data.session) {
+        window.location.replace('/recipes');
+      } else {
+        successEl.textContent = 'Account created! Check your email to confirm.';
+        successEl.style.display = 'block';
+      }
+    }
+  });
+</script>

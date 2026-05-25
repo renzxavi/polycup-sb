@@ -20,10 +20,11 @@ export function createSupabaseServerClient(request, response) {
   const refreshToken = cookies['sb-refresh-token'];
 
   if (accessToken && refreshToken) {
+    // No awaiteamos acá — se resuelve antes de que se use getUser()
     client.auth.setSession({
       access_token: accessToken,
       refresh_token: refreshToken,
-    });
+    }).catch(() => {});
   }
 
   return client;

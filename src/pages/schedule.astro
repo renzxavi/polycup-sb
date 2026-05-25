@@ -1,0 +1,627 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { createSupabaseServerClient } from '../lib/supabase.js';
+
+const supabase = createSupabaseServerClient(Astro.request, Astro.response);
+
+// Obtener receta seleccionada desde query param
+const recipeId = Astro.url.searchParams.get('recipe') || '';
+let recipe = null;
+
+if (recipeId) {
+  const { data } = await supabase
+    .from('recipes')
+    .select('*')
+    .eq('id', recipeId)
+    .single();
+  recipe = data;
+}
+
+// Horarios disponibles
+const timeSlots = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
+---
+
+<Layout title="Choose Date & Time" activeStep={0}>
+
+<style>
+  .pc-steps, .pc-steps-mobile { display: none !important; }
+
+  .sc-page {
+    display: grid;
+    grid-template-columns: 38% 62%;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+  }
+
+  /* LEFT */
+  .sc-left {
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid #111;
+    overflow: hidden;
+  }
+
+  .sc-heading { flex-shrink: 0; }
+
+  .sc-tabs {
+    display: flex;
+    border-bottom: 2px solid #111;
+    flex-shrink: 0;
+  }
+  .sc-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: .15em;
+    border: none;
+    background: none;
+    font-family: 'Space Mono', monospace;
+    color: #8a8a8a;
+    border-bottom: 2px solid transparent;
+  }
+  .sc-tab.active { color: #111; border-bottom: 2px solid #111; font-weight: 700; }
+
+  .sc-scroll {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #e0ddd7 transparent;
+    padding: 20px 24px;
+  }
+  .sc-scroll::-webkit-scrollbar { width: 4px; }
+  .sc-scroll::-webkit-scrollbar-thumb { background: #e0ddd7; border-radius: 2px; }
+
+  /* RECIPE INFO */
+  .sc-recipe-info {
+    padding: 12px 16px;
+    background: #f9f9f9;
+    border: 1px solid #e0ddd7;
+    margin-bottom: 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: #555;
+    letter-spacing: .05em;
+  }
+  .sc-recipe-info strong {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 13px;
+    color: #111;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* CALENDARIO */
+  .sc-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .sc-cal-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 14px;
+    letter-spacing: .05em;
+  }
+  .sc-cal-nav {
+    display: flex;
+    gap: 4px;
+  }
+  .sc-cal-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #e0ddd7;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: background .15s;
+  }
+  .sc-cal-btn:hover { background: #f0f0f0; }
+
+  .sc-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    margin-bottom: 20px;
+  }
+  .sc-cal-day-name {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: #aaa;
+    text-align: center;
+    padding: 4px 0;
+    letter-spacing: .05em;
+  }
+  .sc-cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all .15s;
+    position: relative;
+  }
+  .sc-cal-day.empty { cursor: default; }
+  .sc-cal-day.disabled { color: #ddd; cursor: not-allowed; }
+  .sc-cal-day.available:hover { background: #f5f5f5; border-color: #e0ddd7; }
+  .sc-cal-day.selected { background: #e8c94a; border: 2px solid #111; font-weight: 700; }
+  .sc-cal-day.today { border-color: #111; }
+
+  /* TIME SLOTS */
+  .sc-time-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: .15em;
+    color: #8a8a8a;
+    margin-bottom: 8px;
+  }
+  .sc-time-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .sc-time-slot {
+    padding: 8px 4px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    border: 1px solid #e0ddd7;
+    cursor: pointer;
+    transition: all .15s;
+    background: #fff;
+  }
+  .sc-time-slot:hover { border-color: #111; background: #f5f5f5; }
+  .sc-time-slot.selected { background: #111; color: #e8c94a; border-color: #111; font-weight: 700; }
+
+  /* CONFIRM BTN */
+  .sc-confirm-btn {
+    width: 100%;
+    padding: 14px;
+    background: #e8c94a;
+    border: 2px solid #111;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .15em;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .sc-confirm-btn:hover { background: #d4b535; }
+  .sc-confirm-btn:disabled { background: #e0ddd7; color: #aaa; border-color: #e0ddd7; cursor: not-allowed; }
+
+  /* RIGHT */
+  .sc-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 40px;
+  }
+
+  .sc-empty {
+    text-align: center;
+    color: #ccc;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    z-index: 1;
+  }
+
+  /* CONFIRMATION CARD */
+  .sc-confirm-card {
+    display: none;
+    z-index: 1;
+    text-align: center;
+    max-width: 420px;
+    width: 100%;
+  }
+
+  .sc-confirm-header {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(22px, 3vw, 40px);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .sc-confirm-datetime {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(16px, 2vw, 28px);
+    color: #5a7a9f;
+    margin-bottom: 24px;
+  }
+
+  .sc-confirm-recipe {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 28px;
+    padding: 12px;
+    border: 1px solid #e0ddd7;
+    letter-spacing: .05em;
+  }
+
+  .sc-meet-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: #111;
+    color: #fff;
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    font-weight: 700;
+    margin-bottom: 10px;
+    transition: background .15s;
+    width: 100%;
+  }
+  .sc-meet-link:hover { background: #333; color: #fff; }
+
+  .sc-gcal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: #fff;
+    border: 2px solid #111;
+    color: #111;
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    font-weight: 700;
+    width: 100%;
+    transition: background .15s;
+  }
+  .sc-gcal-btn:hover { background: #f5f5f5; color: #111; }
+
+  .sc-next-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: #e8c94a;
+    border: 2px solid #111;
+    color: #111;
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .15em;
+    font-weight: 700;
+    width: 100%;
+    margin-top: 10px;
+    transition: background .15s;
+  }
+  .sc-next-btn:hover { background: #d4b535; color: #111; }
+
+  /* Cup bg */
+  .sc-cup-bg {
+    position: absolute;
+    bottom: 60px;
+    right: 40px;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 160px;
+    color: #f0f0f0;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  #auth-checking {
+    position: fixed; inset: 0; background: #fff; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: .15em; color: #aaa;
+  }
+
+  @media (max-width: 768px) {
+    .sc-page { grid-template-columns: 1fr; height: auto; overflow: visible; }
+    .sc-right { display: none; }
+    .sc-left { height: auto; border-right: none; }
+    .sc-time-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+
+<div id="auth-checking">CHECKING SESSION...</div>
+
+<div class="sc-page">
+
+  <!-- LEFT -->
+  <div class="sc-left">
+
+    <div class="sc-heading">
+      <span class="auth-h-sign">CHOOSE</span>
+      <span class="auth-h-create">DATE &</span>
+      <span class="auth-h-account">TIME</span>
+    </div>
+
+    <div class="sc-tabs">
+      <button class="sc-tab active">STEP 03 / 06</button>
+      <button class="sc-tab" style="color:#ccc;cursor:default;">SCHEDULE</button>
+    </div>
+
+    <div class="sc-scroll">
+
+      <!-- Recipe seleccionada -->
+      {recipe ? (
+        <div class="sc-recipe-info">
+          <strong>{recipe.name}</strong>
+          {recipe.duration} min · ${recipe.price} · 1:1 private
+        </div>
+      ) : (
+        <div class="sc-recipe-info">
+          <strong>No recipe selected</strong>
+          <a href="/recipes" style="color:#5a7a9f;font-size:10px;">← Back to recipes</a>
+        </div>
+      )}
+
+      <!-- Calendario -->
+      <div class="sc-cal-header">
+        <span class="sc-cal-title" id="cal-title"></span>
+        <div class="sc-cal-nav">
+          <button class="sc-cal-btn" onclick="prevMonth()">‹</button>
+          <button class="sc-cal-btn" onclick="nextMonth()">›</button>
+        </div>
+      </div>
+
+      <div class="sc-cal-grid" id="cal-grid">
+        <div class="sc-cal-day-name">SUN</div>
+        <div class="sc-cal-day-name">MON</div>
+        <div class="sc-cal-day-name">TUE</div>
+        <div class="sc-cal-day-name">WED</div>
+        <div class="sc-cal-day-name">THU</div>
+        <div class="sc-cal-day-name">FRI</div>
+        <div class="sc-cal-day-name">SAT</div>
+      </div>
+
+      <!-- Time slots -->
+      <div id="time-section" style="display:none">
+        <div class="sc-time-label">SELECT A TIME SLOT</div>
+        <div class="sc-time-grid" id="time-grid">
+          {timeSlots.map(t => (
+            <div class="sc-time-slot" data-time={t} onclick="selectTime(this)">{t}</div>
+          ))}
+        </div>
+      </div>
+
+      <button class="sc-confirm-btn" id="confirm-btn" disabled onclick="confirmBooking()">
+        CONFIRM DATE & TIME →
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="sc-right">
+
+    <div class="sc-empty" id="sc-empty">
+      <p>← PICK A DATE</p>
+    </div>
+
+    <div class="sc-confirm-card" id="sc-confirm-card">
+      <div class="sc-confirm-header">YOUR SESSION<br/>IS BOOKED</div>
+      <div class="sc-confirm-datetime" id="conf-datetime"></div>
+      <div class="sc-confirm-recipe" id="conf-recipe"></div>
+
+      <!-- Google Meet link -->
+      <a id="conf-meet-link" href="#" target="_blank" class="sc-meet-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22 8l-6 4 6 4V8zM2 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+        JOIN GOOGLE MEET
+      </a>
+
+      <!-- Add to Google Calendar -->
+      <a id="conf-gcal-link" href="#" target="_blank" class="sc-gcal-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        ADD TO GOOGLE CALENDAR
+      </a>
+
+      <a href="/prepare" class="sc-next-btn">
+        NEXT: WHAT TO BRING →
+      </a>
+    </div>
+
+    <div class="sc-cup-bg">03</div>
+
+  </div>
+
+</div>
+
+</Layout>
+
+<script define:vars={{ recipeId, recipeName: recipe?.name ?? '', recipeDuration: recipe?.duration ?? 60, recipePrice: recipe?.price ?? 5 }}>
+  window.__RECIPE__ = { recipeId, recipeName, recipeDuration, recipePrice };
+</script>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  const { recipeId, recipeName, recipeDuration, recipePrice } = window.__RECIPE__ || {};
+
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) window.location.replace('/auth');
+    else document.getElementById('auth-checking').style.display = 'none';
+  });
+
+  // Fallback por si getSession tarda
+  setTimeout(() => {
+    const el = document.getElementById('auth-checking');
+    if (el) el.style.display = 'none';
+  }, 3000);
+
+  // --- CALENDARIO ---
+  const today   = new Date();
+  const minDate = new Date(today);
+  minDate.setDate(today.getDate() + 7); // mínimo 1 semana adelante
+
+  let currentYear  = minDate.getFullYear();
+  let currentMonth = minDate.getMonth();
+  let selectedDate = null;
+  let selectedTime = null;
+
+  const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+
+  function renderCalendar() {
+    document.getElementById('cal-title').textContent = `${months[currentMonth]} ${currentYear}`;
+
+    // Usar contenedor separado para los días
+    let daysContainer = document.getElementById('cal-days');
+    if (!daysContainer) {
+      daysContainer = document.createElement('div');
+      daysContainer.id = 'cal-days';
+      daysContainer.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:20px;';
+      document.getElementById('cal-grid').after(daysContainer);
+    }
+    daysContainer.innerHTML = '';
+
+    const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement('div');
+      daysContainer.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dayDate  = new Date(currentYear, currentMonth, d);
+      const div      = document.createElement('div');
+      div.textContent = d;
+
+      const isDisabled = dayDate < minDate;
+      const isSelected = selectedDate && dayDate.toDateString() === selectedDate.toDateString();
+
+      div.style.cssText = `
+        aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+        font-family:'Space Mono',monospace;font-size:11px;
+        border:2px solid transparent;transition:all .15s;
+        ${isDisabled ? 'color:#ddd;cursor:not-allowed;' : 'cursor:pointer;'}
+        ${isSelected ? 'background:#111;color:#e8c94a;border-color:#111;font-weight:700;' : ''}
+      `;
+
+      if (!isDisabled) {
+        div.addEventListener('mouseover', () => {
+          if (!isSelected) div.style.background = '#f0f0f0';
+        });
+        div.addEventListener('mouseout', () => {
+          if (!isSelected) div.style.background = '';
+        });
+        div.addEventListener('click', () => pickDate(dayDate, div));
+      }
+
+      daysContainer.appendChild(div);
+    }
+  }
+
+  window.prevMonth = function() {
+    if (currentMonth === 0) { currentMonth = 11; currentYear--; }
+    else currentMonth--;
+    renderCalendar();
+  };
+
+  window.nextMonth = function() {
+    if (currentMonth === 11) { currentMonth = 0; currentYear++; }
+    else currentMonth++;
+    renderCalendar();
+  };
+
+  function pickDate(date, el) {
+    selectedDate = date;
+    selectedTime = null;
+
+    // Desmarcar todos
+    document.querySelectorAll('#cal-days > div').forEach(d => {
+      d.style.background  = '';
+      d.style.color       = '';
+      d.style.borderColor = 'transparent';
+      d.style.fontWeight  = '';
+    });
+
+    // Marcar el seleccionado en negro
+    if (el) {
+      el.style.background  = '#111';
+      el.style.color       = '#e8c94a';
+      el.style.borderColor = '#111';
+      el.style.fontWeight  = '700';
+    }
+
+    document.querySelectorAll('.sc-time-slot').forEach(s => s.classList.remove('selected'));
+    document.getElementById('time-section').style.display = 'block';
+    document.getElementById('confirm-btn').disabled = true;
+    updateRightPanel();
+  }
+
+  window.selectTime = function(el) {
+    document.querySelectorAll('.sc-time-slot').forEach(s => s.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedTime = el.dataset.time;
+    document.getElementById('confirm-btn').disabled = false;
+    updateRightPanel();
+  };
+
+  function updateRightPanel() {
+    if (!selectedDate) return;
+    document.getElementById('sc-empty').style.display = 'none';
+
+    if (selectedDate && selectedTime) {
+      // Mostrar confirmación completa
+      const dateStr = selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('conf-datetime').textContent = `${dateStr} at ${selectedTime}`;
+      document.getElementById('conf-recipe').textContent   = recipeName
+        ? `${recipeName} · ${recipeDuration} min · $${recipePrice}`
+        : 'Coffee session · 60 min';
+
+      // Generar Google Meet link (demo)
+      const meetCode = Math.random().toString(36).substring(2, 5) + '-' +
+                       Math.random().toString(36).substring(2, 5) + '-' +
+                       Math.random().toString(36).substring(2, 5);
+      document.getElementById('conf-meet-link').href = `https://meet.google.com/${meetCode}`;
+
+      // Google Calendar link
+      const [h, m]   = selectedTime.split(':').map(Number);
+      const start    = new Date(selectedDate);
+      start.setHours(h, m, 0, 0);
+      const end      = new Date(start);
+      end.setMinutes(end.getMinutes() + (recipeDuration || 60));
+
+      const fmt = d => d.toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+      const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+        `&text=${encodeURIComponent('PolyCup Coffee Session' + (recipeName ? ': ' + recipeName : ''))}` +
+        `&dates=${fmt(start)}/${fmt(end)}` +
+        `&details=${encodeURIComponent('Your 1:1 private coffee class.\nJoin: https://meet.google.com/' + meetCode)}` +
+        `&location=${encodeURIComponent('Google Meet')}`;
+
+      document.getElementById('conf-gcal-link').href = gcalUrl;
+      document.getElementById('sc-confirm-card').style.display = 'block';
+    }
+  }
+
+  window.confirmBooking = async function() {
+    if (!selectedDate || !selectedTime) return;
+    updateRightPanel();
+  };
+
+  // Iniciar calendario cuando el DOM esté listo
+  document.addEventListener('DOMContentLoaded', () => {
+    renderCalendar();
+  });
+</script>
