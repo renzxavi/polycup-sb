@@ -1,0 +1,268 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { createSupabaseServerClient } from '../lib/supabase.js';
+
+const supabase = createSupabaseServerClient(Astro.request, Astro.response);
+
+const recipeId = Astro.url.searchParams.get('recipe') || '';
+let recipe = null;
+let ingredients = [];
+
+if (recipeId) {
+  const { data: recipeData } = await supabase
+    .from('recipes')
+    .select('*')
+    .eq('id', recipeId)
+    .single();
+  recipe = recipeData;
+
+  const { data: ingredientsData } = await supabase
+    .from('ingredients')
+    .select('*')
+    .eq('recipe_id', recipeId)
+    .order('order', { ascending: true });
+  ingredients = ingredientsData || [];
+}
+---
+
+<Layout title="What to Bring" activeStep={4}>
+
+<style>
+  .pc-steps, .pc-steps-mobile { display: none !important; }
+
+  .pr-page {
+    display: grid;
+    grid-template-columns: 38% 62%;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+  }
+
+  .pr-left {
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid #111;
+    overflow: hidden;
+  }
+
+  .pr-list {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #e0ddd7 transparent;
+  }
+  .pr-list::-webkit-scrollbar { width: 4px; }
+  .pr-list::-webkit-scrollbar-thumb { background: #e0ddd7; border-radius: 2px; }
+
+  .pr-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e0ddd7;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: #aaa;
+    background: #fff;
+    transition: all .15s;
+    user-select: none;
+  }
+  .pr-item:hover { background: #f5f5f5; color: #111; }
+  .pr-item.checked { background: #e8c94a; border: 2px solid #111; color: #111; font-weight: 700; }
+
+  .pr-item-num { font-size: 9px; font-weight: 700; flex-shrink: 0; width: 20px; }
+  .pr-item-name { flex: 1; font-size: 10px; }
+  .pr-item-notes { color: #bbb; font-size: 9px; }
+  .pr-item.checked .pr-item-notes { color: #777; }
+  .pr-item-qty { font-size: 9px; font-weight: 700; letter-spacing: .1em; flex-shrink: 0; color: #5a7a9f; }
+  .pr-item.checked .pr-item-qty { color: #111; }
+
+  .pr-bottom { flex-shrink: 0; display: flex; flex-direction: column; border-top: 2px solid #111; }
+
+  .pr-print-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 14px 16px; background: #111; border: none;
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: .15em; font-weight: 700; color: #fff;
+    cursor: pointer; transition: background .15s;
+  }
+  .pr-print-btn:hover { background: #333; }
+
+  .pr-next-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 14px 16px; background: #e8c94a; border: none; border-top: 1px solid #e0ddd7;
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: .15em; font-weight: 700; color: #111;
+    text-decoration: none; transition: background .15s; cursor: pointer;
+  }
+  .pr-next-btn:hover { background: #d4b535; color: #111; }
+
+  .pr-logout {
+    display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .12em;
+    background: none; border: none; border-top: 1px solid #e0ddd7;
+    color: #c94a35; cursor: pointer; width: 100%; text-align: left;
+  }
+  .pr-logout:hover { background: #fff0ee; }
+
+  .pr-right {
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+
+  .pr-cup { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
+  .pr-cup img { width: clamp(280px, 30vw, 460px); height: auto; object-fit: contain; }
+
+  .pr-watermark {
+    position: absolute; bottom: 80px; right: 40px;
+    font-family: 'Black Han Sans', sans-serif; font-size: 160px;
+    color: #f0f0f0; line-height: 1; user-select: none; pointer-events: none;
+  }
+
+  .pr-empty {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #ccc; font-family: 'Space Mono', monospace;
+    font-size: 10px; letter-spacing: .12em; gap: 12px; padding: 24px; text-align: center;
+  }
+
+  #auth-checking {
+    position: fixed; inset: 0; background: #fff; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .15em; color: #aaa;
+  }
+
+  /* Loading overlay para cuando redirige por localStorage */
+  #loading-recipe {
+    position: fixed; inset: 0; background: #fff; z-index: 998;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .15em; color: #aaa;
+  }
+
+  @media print {
+    .pr-right, .pc-nav, .pr-bottom { display: none !important; }
+    .pr-page { grid-template-columns: 1fr !important; height: auto !important; }
+    .pr-left { border-right: none !important; overflow: visible !important; }
+    .pr-list { overflow: visible !important; }
+  }
+
+  @media (max-width: 768px) {
+    .pr-page { grid-template-columns: 1fr; height: auto; overflow: visible; }
+    .pr-right { display: none; }
+    .pr-left { border-right: none; height: calc(100vh - 56px - 48px); }
+  }
+</style>
+
+<div id="auth-checking">CHECKING SESSION...</div>
+{!recipeId && <div id="loading-recipe">LOADING...</div>}
+
+<div class="pr-page" id="pr-page" style={!recipeId ? 'display:none' : ''}>
+
+  <!-- LEFT -->
+  <div class="pr-left">
+
+    <div style="flex-shrink:0;">
+      <span class="auth-h-sign">WHAT TO</span>
+      <span class="auth-h-create">BRING</span>
+      <span class="auth-h-account">{recipe ? recipe.name.toUpperCase() : 'INGREDIENTS'}</span>
+    </div>
+
+    {ingredients.length > 0 ? (
+      <div class="pr-list">
+        {ingredients.map((ing, i) => (
+          <div class="pr-item" onclick="toggleCheck(this)">
+            <span class="pr-item-num">{String(i + 1).padStart(2, '0')}</span>
+            <span class="pr-item-name">
+              {ing.name}
+              {ing.notes && <span class="pr-item-notes"> — {ing.notes}</span>}
+            </span>
+            <span class="pr-item-qty">{ing.quantity}{ing.unit ? ` ${ing.unit}` : ''}</span>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="pr-empty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+        <p>NO INGREDIENTS LOADED</p>
+        <p style="font-size:9px;color:#ddd;">Add them in Supabase → ingredients</p>
+      </div>
+    )}
+
+    <div class="pr-bottom">
+      <button class="pr-print-btn" onclick="window.print()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z"/>
+        </svg>
+        PRINT LIST
+      </button>
+      <a href="/payment" class="pr-next-btn">
+        NEXT: COMPLETE PAYMENT →
+      </a>
+      <button id="logout-btn" class="pr-logout">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+        </svg>
+        SIGN OUT
+      </button>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="pr-right">
+    <div class="pr-cup">
+      <img src="/images/cup.png" alt="Coffee cup" />
+    </div>
+    <div class="pr-watermark">04</div>
+  </div>
+
+</div>
+
+</Layout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  // Auth check
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) window.location.replace('/auth');
+    else document.getElementById('auth-checking').style.display = 'none';
+  });
+
+  document.getElementById('logout-btn')?.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('pc_max_step');
+    window.location.replace('/auth');
+  });
+
+  // Si no hay recipe en URL → leer del localStorage y redirigir
+  const params = new URLSearchParams(window.location.search);
+  const recipeIdFromUrl = params.get('recipe');
+
+  if (!recipeIdFromUrl) {
+    const booking = JSON.parse(localStorage.getItem('pc_booking') || '{}');
+    if (booking.recipeId && booking.recipeId !== '') {
+      window.location.replace(`/prepare?recipe=${booking.recipeId}`);
+    } else {
+      // Intentar cargar ingredients client-side si hay recipeId en booking
+      const loading = document.getElementById('loading-recipe');
+      if (loading) loading.style.display = 'none';
+      const page = document.getElementById('pr-page');
+      if (page) page.style.display = 'grid';
+    }
+  } else {
+    const loading = document.getElementById('loading-recipe');
+    if (loading) loading.style.display = 'none';
+  }
+
+  window.toggleCheck = function(el) {
+    el.classList.toggle('checked');
+  };
+</script>

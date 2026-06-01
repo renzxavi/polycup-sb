@@ -1,0 +1,344 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { createSupabaseServerClient } from '../lib/supabase.js';
+
+const supabase = createSupabaseServerClient(Astro.request, Astro.response);
+const status = Astro.url.searchParams.get('status') || '';
+---
+
+<Layout title="Your Session" activeStep={6}>
+
+<style>
+  .pc-steps, .pc-steps-mobile { display: none !important; }
+
+  .sess-page {
+    display: grid;
+    grid-template-columns: 38% 62%;
+    height: calc(100vh - 56px);
+    overflow: hidden;
+  }
+
+  .sess-left {
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid #111;
+    overflow: hidden;
+  }
+
+  .sess-scroll {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #e0ddd7 transparent;
+  }
+  .sess-scroll::-webkit-scrollbar { width: 4px; }
+  .sess-scroll::-webkit-scrollbar-thumb { background: #e0ddd7; border-radius: 2px; }
+
+  .sess-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0ddd7;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: #aaa;
+  }
+  .sess-item-label { font-size: 9px; flex-shrink: 0; width: 80px; }
+  .sess-item-value {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 13px;
+    color: #111;
+    text-align: right;
+  }
+
+  .sess-alert {
+    padding: 12px 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .08em;
+    border-bottom: 2px solid;
+    flex-shrink: 0;
+  }
+  .sess-alert-success { background: #f0fff4; border-color: #2d7a3a; color: #2d7a3a; }
+  .sess-alert-pending { background: #fffbee; border-color: #b87a00; color: #b87a00; }
+
+  .sess-meet {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: #111;
+    color: #fff;
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    font-weight: 700;
+    transition: background .15s;
+    flex-shrink: 0;
+  }
+  .sess-meet:hover { background: #333; color: #fff; }
+  .sess-meet.disabled {
+    background: #e0ddd7;
+    color: #aaa;
+    pointer-events: none;
+  }
+
+  .sess-gcal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #fff;
+    border-top: 1px solid #e0ddd7;
+    color: #111;
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .12em;
+    font-weight: 700;
+    transition: background .15s;
+    flex-shrink: 0;
+  }
+  .sess-gcal:hover { background: #f5f5f5; }
+
+  .sess-bottom {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-top: 2px solid #111;
+  }
+
+  .sess-new-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 14px 16px; background: #e8c94a; border: none;
+    font-family: 'Space Mono', monospace; font-size: 11px;
+    letter-spacing: .15em; font-weight: 700; color: #111;
+    text-decoration: none; transition: background .15s;
+  }
+  .sess-new-btn:hover { background: #d4b535; color: #111; }
+
+  .sess-logout {
+    display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+    font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .12em;
+    background: none; border: none; border-top: 1px solid #e0ddd7;
+    color: #c94a35; cursor: pointer; width: 100%; text-align: left;
+  }
+  .sess-logout:hover { background: #fff0ee; }
+
+  .sess-right {
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden; flex-direction: column;
+    gap: 0; padding: 40px;
+  }
+
+  .sess-confirmed {
+    text-align: center;
+    z-index: 1;
+  }
+
+  .sess-confirmed-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(28px, 4vw, 56px);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .sess-confirmed-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: #888;
+    letter-spacing: .08em;
+    margin-bottom: 32px;
+  }
+
+  .sess-cup { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); }
+  .sess-cup img { width: clamp(280px, 30vw, 460px); height: auto; object-fit: contain; }
+
+  .sess-watermark {
+    position: absolute; bottom: 80px; right: 40px;
+    font-family: 'Black Han Sans', sans-serif; font-size: 160px;
+    color: #f0f0f0; line-height: 1; user-select: none; pointer-events: none;
+  }
+
+  #auth-checking {
+    position: fixed; inset: 0; background: #fff; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: .15em; color: #aaa;
+  }
+
+  @media (max-width: 768px) {
+    .sess-page { grid-template-columns: 1fr; height: auto; overflow: visible; }
+    .sess-right { display: none; }
+    .sess-left { border-right: none; }
+  }
+</style>
+
+<div id="auth-checking">CHECKING SESSION...</div>
+
+<div class="sess-page">
+
+  <div class="sess-left">
+
+    <div style="flex-shrink:0;">
+      <span class="auth-h-sign">YOUR</span>
+      <span class="auth-h-create">SESSION</span>
+      <span class="auth-h-account">IS BOOKED</span>
+    </div>
+
+    {status === 'success' && (
+      <div class="sess-alert sess-alert-success">✓ PAYMENT APPROVED</div>
+    )}
+    {status === 'pending' && (
+      <div class="sess-alert sess-alert-pending">⏳ PAYMENT PENDING</div>
+    )}
+
+    <div class="sess-scroll">
+      <div class="sess-item">
+        <span class="sess-item-label">RECIPE</span>
+        <span class="sess-item-value" id="sess-recipe">—</span>
+      </div>
+      <div class="sess-item">
+        <span class="sess-item-label">DATE</span>
+        <span class="sess-item-value" id="sess-date">—</span>
+      </div>
+      <div class="sess-item">
+        <span class="sess-item-label">TIME</span>
+        <span class="sess-item-value" id="sess-time">—</span>
+      </div>
+      <div class="sess-item">
+        <span class="sess-item-label">FORMAT</span>
+        <span class="sess-item-value">1:1 PRIVATE</span>
+      </div>
+      <div class="sess-item">
+        <span class="sess-item-label">STATUS</span>
+        <span class="sess-item-value" id="sess-status">—</span>
+      </div>
+      <div class="sess-item">
+        <span class="sess-item-label">MEET</span>
+        <span class="sess-item-value" id="sess-meet-text" style="font-size:10px;word-break:break-all;color:#555;">—</span>
+      </div>
+    </div>
+
+    <a id="sess-meet-btn" href="#" target="_blank" class="sess-meet disabled">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M22 8l-6 4 6 4V8zM2 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/>
+      </svg>
+      <span id="sess-meet-label">MEET LINK PENDING</span>
+    </a>
+
+    <a id="sess-gcal-btn" href="#" target="_blank" class="sess-gcal" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+      </svg>
+      ADD TO GOOGLE CALENDAR
+    </a>
+
+    <div class="sess-bottom">
+      <a href="/dashboard" class="sess-new-btn">
+        GO TO MY DASHBOARD →
+      </a>
+      <button id="logout-btn" class="sess-logout">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+        </svg>
+        SIGN OUT
+      </button>
+    </div>
+
+  </div>
+
+  <div class="sess-right">
+    <div class="sess-confirmed">
+      <div class="sess-confirmed-title">YOUR<br/>SESSION<br/>IS BOOKED</div>
+      <div class="sess-confirmed-sub" id="sess-confirmed-date"></div>
+    </div>
+    <div class="sess-cup">
+      <img src="/images/cup.png" alt="Coffee cup" />
+    </div>
+    <div class="sess-watermark">06</div>
+  </div>
+
+</div>
+
+</Layout>
+
+<script>
+  import { createClient } from '@supabase/supabase-js';
+  const supabase = createClient(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+  );
+
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) window.location.replace('/auth');
+    else {
+      document.getElementById('auth-checking').style.display = 'none';
+      loadBooking(session);
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('pc_max_step');
+    localStorage.removeItem('pc_booking');
+    window.location.replace('/auth');
+  });
+
+  async function loadBooking(session) {
+    const booking = JSON.parse(localStorage.getItem('pc_booking') || '{}');
+
+    if (booking.recipeName) document.getElementById('sess-recipe').textContent = booking.recipeName;
+    if (booking.date) {
+      const d = new Date(booking.date);
+      const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('sess-date').textContent = dateStr;
+      document.getElementById('sess-confirmed-date').textContent = dateStr;
+    }
+    if (booking.time) document.getElementById('sess-time').textContent = booking.time;
+
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const statusEl = document.getElementById('sess-status');
+    if (status === 'success') {
+      statusEl.textContent = 'CONFIRMED ✓';
+      statusEl.style.color = '#2d7a3a';
+    } else if (status === 'pending') {
+      statusEl.textContent = 'PENDING ⏳';
+      statusEl.style.color = '#b87a00';
+    } else {
+      statusEl.textContent = 'CONFIRMED';
+    }
+
+    // Meet link desde localStorage primero
+    let meetLink = booking.meetLink || '';
+
+    // Si hay sessionId, buscar en Supabase también
+    if (booking.sessionId) {
+      const { data: sessionData } = await supabase
+        .from('sessions')
+        .select('meet_link')
+        .eq('id', booking.sessionId)
+        .single();
+      if (sessionData?.meet_link) meetLink = sessionData.meet_link;
+    }
+
+    if (meetLink) {
+      const meetBtn = document.getElementById('sess-meet-btn');
+      meetBtn.href = meetLink;
+      meetBtn.classList.remove('disabled');
+      document.getElementById('sess-meet-label').textContent = 'JOIN GOOGLE MEET';
+      document.getElementById('sess-meet-text').textContent = meetLink;
+    }
+
+    if (booking.gcalUrl) {
+      const gcalBtn = document.getElementById('sess-gcal-btn');
+      gcalBtn.href = booking.gcalUrl;
+      gcalBtn.style.display = 'flex';
+    }
+  }
+</script>

@@ -1,5 +1,5 @@
 ---
-const { title = 'PolyCup', activeStep = 0 } = Astro.props;
+const { title = 'PolyCup', activeStep = 0, hideSteps = false } = Astro.props;
 
 const steps = [
   { num: '01', label: 'LOG IN OR SIGN UP' },
@@ -23,9 +23,13 @@ const steps = [
   <style>
     body { background: #fff; font-family: 'Space Mono', monospace; margin: 0; }
 
-    /* NAVBAR */
     .pc-nav { background: #111; height: 56px; display: flex; align-items: stretch; position: sticky; top: 0; z-index: 100; }
-    .pc-nav-me { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 16px; border-right: 1px solid #333; color: #fff; text-decoration: none; gap: 2px; min-width: 56px; }
+    .pc-nav-me {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 0 16px; color: #fff; text-decoration: none; gap: 2px; min-width: 56px;
+      border: none; outline: none;
+    }
+    .pc-nav-me:hover { background: #222; }
     .pc-nav-me svg { width: 18px; height: 18px; }
     .pc-nav-me span { font-size: 9px; letter-spacing: .1em; }
     .pc-nav-stats { flex: 1; display: flex; align-items: center; justify-content: center; gap: 32px; }
@@ -35,20 +39,28 @@ const steps = [
     .pc-nav-brand { display: flex; align-items: center; padding: 0 20px; border-left: 1px solid #333; font-family: 'Black Han Sans', sans-serif; font-size: 20px; color: #fff; text-decoration: none; }
     .pc-nav-brand span { color: #e8c94a; }
 
-    /* STEPS SIDEBAR — desktop */
     .pc-steps { position: fixed; right: 20px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 5px; z-index: 40; }
-    .pc-step { display: flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: .1em; padding: 5px 10px; white-space: nowrap; font-family: 'Space Mono', monospace; }
-    .pc-step.active { background: #e8c94a; border: 2px solid #111; color: #111; font-weight: 700; }
-    .pc-step.inactive { border: 1px solid #e0ddd7; color: #aaa; background: #fff; }
+    .pc-step {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 10px; letter-spacing: .1em; padding: 5px 10px;
+      white-space: nowrap; font-family: 'Space Mono', monospace;
+      border: 1px solid #e0ddd7; color: #ccc; background: #fff;
+      transition: all .2s;
+    }
+    .pc-step.active  { background: #e8c94a; border: 2px solid #111; color: #111; font-weight: 700; }
+    .pc-step.done    { background: #e8c94a; border: 1px solid #d4b535; color: #111; opacity: .7; }
     .pc-step-num { font-size: 9px; font-weight: 700; }
-    .pc-step-label { }
 
-    /* STEPS BOTTOM BAR — mobile */
     .pc-steps-mobile { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 2px solid #111; z-index: 90; overflow-x: auto; }
     .pc-steps-mobile-inner { display: flex; padding: 6px 8px; gap: 4px; min-width: max-content; }
-    .pc-step-m { display: flex; align-items: center; gap: 4px; font-size: 9px; letter-spacing: .08em; padding: 4px 8px; font-family: 'Space Mono', monospace; white-space: nowrap; }
+    .pc-step-m {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 9px; letter-spacing: .08em; padding: 4px 8px;
+      font-family: 'Space Mono', monospace; white-space: nowrap;
+      border: 1px solid #e0ddd7; color: #ccc;
+    }
     .pc-step-m.active { background: #e8c94a; border: 2px solid #111; color: #111; font-weight: 700; }
-    .pc-step-m.inactive { border: 1px solid #e0ddd7; color: #aaa; }
+    .pc-step-m.done   { background: #e8c94a; border: 1px solid #d4b535; color: #111; opacity: .7; }
 
     @media (max-width: 768px) {
       .pc-nav-stats { gap: 12px; }
@@ -62,7 +74,6 @@ const steps = [
 </head>
 <body>
 
-  <!-- NAVBAR -->
   <nav class="pc-nav">
     <a href="/me" class="pc-nav-me">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -70,7 +81,6 @@ const steps = [
       </svg>
       <span>ME</span>
     </a>
-
     <div class="pc-nav-stats">
       {[['9','RECIPE'],["10'",'PER SESSION'],['1:1','PRIVATE'],['$ 5','FROM']].map(([val, label]) => (
         <div class="pc-nav-stat">
@@ -79,36 +89,57 @@ const steps = [
         </div>
       ))}
     </div>
-
     <a href="/" class="pc-nav-brand">POLY<span>C</span>UP</a>
   </nav>
 
-  <!-- STEPS SIDEBAR (desktop) -->
-  <aside class="pc-steps">
-    {steps.map((step, i) => (
-      <div class={`pc-step ${activeStep === i+1 ? 'active' : 'inactive'}`}>
-        <span class="pc-step-num">{step.num}</span>
-        <span class="pc-step-label">{step.label}</span>
-      </div>
-    ))}
-  </aside>
-
-  <!-- STEPS BOTTOM BAR (mobile) -->
-  <div class="pc-steps-mobile">
-    <div class="pc-steps-mobile-inner">
+  {!hideSteps && (
+    <aside class="pc-steps" id="pc-steps">
       {steps.map((step, i) => (
-        <div class={`pc-step-m ${activeStep === i+1 ? 'active' : 'inactive'}`}>
-          <span style="font-weight:700">{step.num}</span>
+        <div class="pc-step" id={`step-${i+1}`} data-step={i+1}>
+          <span class="pc-step-num">{step.num}</span>
           <span>{step.label}</span>
         </div>
       ))}
+    </aside>
+  )}
+
+  {!hideSteps && (
+    <div class="pc-steps-mobile">
+      <div class="pc-steps-mobile-inner" id="pc-steps-mobile">
+        {steps.map((step, i) => (
+          <div class="pc-step-m" id={`step-m-${i+1}`} data-step={i+1}>
+            <span style="font-weight:700">{step.num}</span>
+            <span>{step.label}</span>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
+  )}
 
   <main>
     <slot />
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script define:vars={{ activeStep, hideSteps }}>
+    if (!hideSteps && activeStep > 0) {
+      const maxReached = parseInt(localStorage.getItem('pc_max_step') || '0');
+      const current    = activeStep;
+      if (current > maxReached) localStorage.setItem('pc_max_step', current);
+
+      for (let i = 1; i <= 6; i++) {
+        const el  = document.getElementById(`step-${i}`);
+        const elm = document.getElementById(`step-m-${i}`);
+        if (i === current) {
+          el?.classList.add('active');
+          elm?.classList.add('active');
+        } else if (i < current) {
+          el?.classList.add('done');
+          elm?.classList.add('done');
+        }
+      }
+    }
+  </script>
 </body>
 </html>

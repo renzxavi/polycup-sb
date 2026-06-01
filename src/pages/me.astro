@@ -1,0 +1,174 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="About" activeStep={0} hideSteps={true}>
+
+<style>
+  * { box-sizing: border-box; }
+
+  .me-page {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - 56px);
+  }
+
+  /* LEFT */
+  .me-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 60px;
+    border-right: 2px solid #111;
+    position: relative;
+  }
+
+  .me-blocks {
+    position: relative;
+    width: 320px;
+    height: 320px;
+  }
+
+  .me-block {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 28px;
+    letter-spacing: .05em;
+    border: 2px solid #111;
+  }
+
+  .me-block-about {
+    width: 160px; height: 80px;
+    background: #5a7a9f; color: #fff;
+    top: 0; left: 0;
+  }
+
+  .me-block-this {
+    width: 220px; height: 160px;
+    background: #e8c94a; color: #111;
+    font-size: 56px;
+    top: 60px; left: 40px;
+  }
+
+  .me-block-project {
+    width: 180px; height: 80px;
+    background: #c94a35; color: #fff;
+    top: 200px; left: 100px;
+  }
+
+  /* Close button */
+  .me-close {
+    position: fixed;
+    top: 70px;
+    right: 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .15em;
+    color: #aaa;
+    text-decoration: none;
+    cursor: pointer;
+    z-index: 50;
+    transition: color .15s;
+  }
+  .me-close:hover { color: #111; }
+
+  /* RIGHT */
+  .me-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 60px;
+  }
+
+  .me-text {
+    max-width: 400px;
+  }
+
+  .me-text p {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    line-height: 2;
+    color: #333;
+    margin-bottom: 20px;
+    letter-spacing: .02em;
+  }
+
+  .me-text p:last-child { margin-bottom: 0; }
+
+  .me-cta {
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid #e0ddd7;
+  }
+
+  .me-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: #e8c94a;
+    border: 2px solid #111;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .15em;
+    font-weight: 700;
+    color: #111;
+    text-decoration: none;
+    transition: background .15s;
+  }
+  .me-cta-btn:hover { background: #d4b535; }
+
+  @media (max-width: 768px) {
+    .me-page { grid-template-columns: 1fr; }
+    .me-left {
+      border-right: none;
+      border-bottom: 2px solid #111;
+      padding: 60px 40px;
+    }
+    .me-right { padding: 40px 24px; }
+    .me-blocks { width: 260px; height: 260px; }
+    .me-block-about { width: 130px; height: 65px; font-size: 22px; }
+    .me-block-this { width: 180px; height: 130px; font-size: 44px; top: 50px; left: 30px; }
+    .me-block-project { width: 150px; height: 65px; font-size: 22px; top: 160px; left: 80px; }
+  }
+</style>
+
+<a href="/" class="me-close">CLOSE</a>
+
+<div class="me-page">
+
+  <!-- LEFT -->
+  <div class="me-left">
+    <div class="me-blocks">
+      <div class="me-block me-block-about">ABOUT</div>
+      <div class="me-block me-block-this">THIS</div>
+      <div class="me-block me-block-project">PROJECT</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="me-right">
+    <div class="me-text">
+      <p>I studied to be a barista a few years ago. Before that, I had studied chemistry, so I already had that curiosity about extractions, mixtures, and proportions.</p>
+      <p>I still make coffee. I try things, change something, try again. Sometimes it turns out better, sometimes not so much.</p>
+      <p>Over time, something became clear: coffee on your own loses interest.</p>
+      <p>The taste doesn't change. The experience does.</p>
+      <p>That's where this idea comes from. Making coffee at the same time, each in our own place, knowing there's someone learning how to prepare their favorite recipe.</p>
+      <p>It doesn't take much.</p>
+      <p>Coffee, and someone on the other side, giving meaning to everything I learned in my barista course.</p>
+      <p>If the idea appeals to you, I'd love for us to make coffee together.</p>
+
+      <div class="me-cta">
+        <a href="/recipes" class="me-cta-btn">
+          START BREWING →
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</Layout>
